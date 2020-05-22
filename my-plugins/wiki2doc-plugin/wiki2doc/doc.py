@@ -1,5 +1,4 @@
-""" class to create an ADC and/or Stress
-    report in MS Word """
+""" class to create a word document """
 
 import re
 import os
@@ -26,8 +25,8 @@ process_blockquote,\
 remove_forward_slash,\
 table_font_size
 
-class Report(object): # pylint: disable=too-many-public-methods
-    """ class to create an ADC and/or Stress report in MS Word """
+class Doc(object): # pylint: disable=too-many-public-methods
+    """ class to create a document in MS Word """
 
     def __init__(self, args):
         self.document = Document(args[0])

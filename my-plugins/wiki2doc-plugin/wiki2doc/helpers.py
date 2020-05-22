@@ -771,24 +771,6 @@ def get_link_name(hyper):
 def get_wiki_specname(spec_name, hyper):
     """ returns the wiki page name for another
         page that is under same parent path.
-
-        Example wikipage spec name: APO/IP006/Dummy-APO-Database/
-        IP006-APO-Spec-Sill
-
-        Example reference from inside the link above.
-        [[Dummy-APO-Database/GPD/Material_Strength| MS-GPD]]
-        [[Dummy-APO-Database/GPD/Metallic_Joint| MBJ-GPD]]
-        [[/GPD/Material_Strength| MS-GPD]]
-        [[GPD/Material_Strength| MS-GPD]]
-        [[/IP006/Dummy-APO-Database/GPD/Material_Strength| MS-GPD]]
-        [[IP006/Dummy-APO-Database/GPD/Material_Strength| MS-GPD]]
-        [[IP006/Dummy-APO-Database/GPD/Material_Strength]]
-
-        This works because both "IP006-APO-Spec-Sill" and
-        "GPD/Material_Strength" are under:
-
-        http://10.45.43.145:8000/Coconut/
-        event/wiki/APO/IP006/Dummy-APO-Database/
         """
 
     given_path = remove_forward_slash(hyper[1]) + hyper[2]

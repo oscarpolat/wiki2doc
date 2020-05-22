@@ -15,7 +15,7 @@ from trac.resource import Resource
 from trac.wiki.model import WikiPage
 from trac.attachment import Attachment
 from .helpers import set_req_keys, get_base_url
-from .report import Report
+from .doc import Doc
 
 #env = Environment('/home/user/Workspace/t11518/tracdev')
 #resource = Resource('wiki', 'WikiStart', 1)
