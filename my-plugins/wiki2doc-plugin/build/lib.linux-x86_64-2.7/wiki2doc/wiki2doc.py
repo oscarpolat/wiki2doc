@@ -4,18 +4,44 @@ it reads a wiki page and prints this information into a word
 document (docx/docm).
 """
 
+import docx
+import os
+import sys
 import re
 import urllib
+from docx.shared import Inches
+from docx.shared import Pt
+from enum import IntEnum
 from genshi.builder import tag
 from trac.core import Component, implements
 from trac.web import IRequestHandler
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
+from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, Chrome
 from trac.env import Environment
 from trac.resource import Resource
 from trac.wiki.model import WikiPage
 from trac.attachment import Attachment
-from .helpers import set_req_keys, get_base_url
-from .report import Report
+from trac.web.api import RequestDone
+from trac.util.text import to_unicode
+from trac.util import content_disposition
+from .helpers import set_req_keys, get_base_url, get_sections_with_tables
+from .doc import Doc
+import numpy as np
+
+from trac.util.html import html
+from HTMLParser import HTMLParser
+
+# from operator import itemgetter
+# from simplemultiproject.model import SmpModel
+# from trac.env import open_environment
+# from trac.perm import IPermissionRequestor
+# from trac.util import content_disposition
+
+# from trac.util.text import to_unicode
+# from HTMLParser import HTMLParser
+# from htmlentitydefs import name2codepoint
+# from docx.oxml import OxmlElement
+# from docx.oxml.ns import qn
+# from itertools import groupby
 
 #env = Environment('/home/user/Workspace/t11518/tracdev')
 #resource = Resource('wiki', 'WikiStart', 1)
@@ -29,6 +55,18 @@ TEMPLATE_NAME = 'template.docx'
 
 class WikiToDoc(Component):
     implements(INavigationContributor, ITemplateProvider, IRequestHandler)
+
+    errorlog = []
+
+    def __init__(self):
+        """ grab the 3 environments """
+#         base_dir = os.path.split(self.env.path)[0] # pylint: disable=no-member
+#         self.envs = {}
+#         for instance in self.instances:
+#             path = os.path.join(base_dir, instance)
+#             if os.path.isdir(path):
+#                 self.envs[instance] = open_environment(path)
+        self.data = {}
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -92,7 +130,39 @@ class WikiToDoc(Component):
 
                 print(page.name)
 
-                self.process_report_task(page, req)
+                errorlog, content = self.process_report_task(page, req)
+                print('errorlog', errorlog)
+                # select dropdowns in form
+#                 keys = [project, igrmilestone,
+#                         milestone, igrtask,
+#                         ogrtask, clicked_button]
+
+                self.data['errorlog'] = errorlog
+                print('errorlog', errorlog)
+                 
+                if len(errorlog) == 0:
+                    self.data['form'] = {
+                         'create_report': to_unicode(req_keys[0]),
+                         'form_token': to_unicode(req_keys[1]),
+                         'get_wiki_link': to_unicode(req_keys[2]),
+                    }
+                    length = len(content)
+                    req.send_response(200)
+                    req.send_header(
+                        'Content-Type',
+                        'application/' + \
+                        'vnd.' + \
+                        'openxmlformats-officedocument.' +
+                        'wordprocessingml.' +
+                        'document')
+                    if length is not None:
+                         req.send_header('Content-Length', length)
+                    req.send_header('Content-Disposition',
+                                     content_disposition('attachment',
+                                                         'out.docx'))
+                    req.end_headers()
+                    req.write(content)
+                    raise RequestDone
         else:
             pass
 
@@ -100,6 +170,8 @@ class WikiToDoc(Component):
         add_stylesheet(req, 'hw/css/wiki2doc.css')
         # This tuple is for Genshi (template_name, data, content_type)
         # Without data the trac layout will not appear.
+        if hasattr(Chrome, 'add_jquery_ui'):
+            Chrome(self.env).add_jquery_ui(req) # pylint: disable=no-member        
         return 'wiki2doc.html', data, None
 
     # ITemplateProvider methods
@@ -147,22 +219,27 @@ class WikiToDoc(Component):
     
     def process_report_task(self, page, req):
         """ process selected create apo and
-            create report tasks.
-            parameters = [sel_apo_tasks,
-                          keys[4],
-                          req]"""
+            create report tasks."""
 
-        report = self.create_report(req)
+        document = self.create_document(req)
 
         sections = self.get_sections_with_images(page, req)
-        #sections = get_sections_with_tables(sections)
+        print('1.sections', sections)
         
-        print('sections', sections)
-
-        #return self.errorlog, report.get_content()
+        #sections = np.array(sections)
+        
+        #print('shape', sections.shape)
+        
+        sections = get_sections_with_tables(sections)
+        print('2.sections', sections)
+        
+        document.add_document(sections)
+        print('OK So far after document.add_document(sections)')
+        return self.errorlog, document.get_content()
+        #return None, None
     
-    def create_report(self, req):
-        """ Create SAR report """
+    def create_document(self, req):
+        """ Creates document class """
 
         args = []
 
@@ -173,9 +250,9 @@ class WikiToDoc(Component):
                 self,
                 req]
          
-        report = Report(args)
+        document = Doc(args)
 
-        return report
+        return document
 
     def get_sections_with_images(self, page, req):
         """ given a list of sections, returns a list of sections
@@ -205,7 +282,7 @@ class WikiToDoc(Component):
                         img_list.append(img_filename)
                         path_list.append(img_path)
         spec_images = dict(zip(img_list, path_list))
-        sections_with_imgs.append([text, spec_images])
+        sections_with_imgs.append([page.name, text, spec_images])
         spec_images = {}
 
         return sections_with_imgs

@@ -1,4 +1,4 @@
-
+from HTMLParser import HTMLParser
 
 class DocumentHTMLParser(HTMLParser): # pylint: disable=too-many-public-methods
     """ Parses wikimarkup to html code string """

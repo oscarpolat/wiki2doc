@@ -1,6 +1,9 @@
 """ Helper methods. """
 
 import re
+from itertools import groupby
+from docx.shared import Inches
+from docx.shared import Pt
 #from __builtin__ import None
 
 FILTER_STYLES = [(r'(.*)\~\~(.*?)\~\~(.*)$',
@@ -155,34 +158,43 @@ def find_hyperlinks(text):
     rest = ''
 
     regex_id, hypermatches = select_link_type(text)
+    print('inside find_hyperlinks after -> regex_id, hypermatches = select_link_type(text)')
+    print('regex_id:', regex_id)
+    print('hypermatches:', hypermatches)
 
     if regex_id == 0 and len(hypermatches) > 0:
+        print('1. find_hyperlinks(text):')
         # matches [[link_path|link_name]]
         hyperlist = get_hyperlist_dbrk(hypermatches)
         regex = r'^(.*)\[\[(http\:|https\:|file\:|e\:\/wiki\/|e\:wiki\/|'+\
             r'\/wiki\/|wiki\:|attachment\:)(.*?)\]\](.*?)$'
 
     elif regex_id == 1 and len(hypermatches) > 0:
+        print('2. find_hyperlinks(text):')
         # matches [link_path link_name]
         hyperlist = hypermatches
         regex = r'^(.*)\[(http\:|https\:|file\:|e\:\/wiki\/|e\:wiki\/|' +\
             r'\/wiki\/|wiki\:|attachment\:)(.*?)\](.*?)$'
 
     elif regex_id == 2 and len(hypermatches) > 0:
+        print('3. find_hyperlinks(text):')
         hyperlist = hypermatches
         regex = r"^(.*)(http\:|https\:|file\:|e\:\/wiki\/|e\:wiki\/|" +\
             r"\/wiki\/|wiki\:|attachment\:)(.*?)(?:\s*$|\s+)(.*?)$"
 
     elif regex_id == 3 and len(hypermatches) > 0:
+        print('4. find_hyperlinks(text):')
         hyperlist = get_hyperlist_ticket(hypermatches)
         regex = r"^(.*)(r\:\#)(.*?)(?:\s*$|\s+)(.*?)$"
 
     elif regex_id == 4 and len(hypermatches) > 0:
+        print('5. find_hyperlinks(text):')
         hypermatches = check_for_relative_link(hypermatches)
         hyperlist = get_hyperlist_dbrk(hypermatches)
         regex = r'^(.*)\[\[(.*?\/.*?)(.*?)\]\](.*?)$'
 
     if regex_id >= 0 and len(hypermatches) > 0:
+        print('6. find_hyperlinks(text):')
         match_pattern = re.compile(regex)
         match = match_pattern.match(text)
         if match:
@@ -450,7 +462,7 @@ def get_sections_with_tables(sections):
     key = 0
     text_without_tables = []
     for i in range(len(sections)):
-        i_text = [i, sections[i][2]]
+        i_text = [i, sections[i][1]]
         if i_text[1] is not None:
             for table_text in tables_in_spec_text(i_text):
                 if table_text and len(table_text[0]) > 0:
@@ -466,9 +478,8 @@ def get_sections_with_tables(sections):
         key = 0
         spec_tables = dict(zip(table_keys, table_values))
         text_without_tables = "\n".join(text_without_tables)
-        spec_images = sections[i][3]
+        spec_images = sections[i][2]
         sections_with_tables.append([sections[i][0],
-                                     sections[i][1],
                                      text_without_tables,
                                      spec_images,
                                      spec_tables])
@@ -771,24 +782,6 @@ def get_link_name(hyper):
 def get_wiki_specname(spec_name, hyper):
     """ returns the wiki page name for another
         page that is under same parent path.
-
-        Example wikipage spec name: APO/IP006/Dummy-APO-Database/
-        IP006-APO-Spec-Sill
-
-        Example reference from inside the link above.
-        [[Dummy-APO-Database/GPD/Material_Strength| MS-GPD]]
-        [[Dummy-APO-Database/GPD/Metallic_Joint| MBJ-GPD]]
-        [[/GPD/Material_Strength| MS-GPD]]
-        [[GPD/Material_Strength| MS-GPD]]
-        [[/IP006/Dummy-APO-Database/GPD/Material_Strength| MS-GPD]]
-        [[IP006/Dummy-APO-Database/GPD/Material_Strength| MS-GPD]]
-        [[IP006/Dummy-APO-Database/GPD/Material_Strength]]
-
-        This works because both "IP006-APO-Spec-Sill" and
-        "GPD/Material_Strength" are under:
-
-        http://10.45.43.145:8000/Coconut/
-        event/wiki/APO/IP006/Dummy-APO-Database/
         """
 
     given_path = remove_forward_slash(hyper[1]) + hyper[2]
