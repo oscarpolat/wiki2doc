@@ -1,9 +1,13 @@
 """ Helper methods. """
 
 import re
+import docx
+import urllib
 from itertools import groupby
 from docx.shared import Inches
 from docx.shared import Pt
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 #from __builtin__ import None
 
 FILTER_STYLES = [(r'(.*)\~\~(.*?)\~\~(.*)$',
@@ -158,43 +162,43 @@ def find_hyperlinks(text):
     rest = ''
 
     regex_id, hypermatches = select_link_type(text)
-    print('inside find_hyperlinks after -> regex_id, hypermatches = select_link_type(text)')
-    print('regex_id:', regex_id)
-    print('hypermatches:', hypermatches)
+    #print('inside find_hyperlinks after -> regex_id, hypermatches = select_link_type(text)')
+    #print('regex_id:', regex_id)
+    #print('hypermatches:', hypermatches)
 
     if regex_id == 0 and len(hypermatches) > 0:
-        print('1. find_hyperlinks(text):')
+        #print('1. find_hyperlinks(text):')
         # matches [[link_path|link_name]]
         hyperlist = get_hyperlist_dbrk(hypermatches)
         regex = r'^(.*)\[\[(http\:|https\:|file\:|e\:\/wiki\/|e\:wiki\/|'+\
             r'\/wiki\/|wiki\:|attachment\:)(.*?)\]\](.*?)$'
 
     elif regex_id == 1 and len(hypermatches) > 0:
-        print('2. find_hyperlinks(text):')
+        #print('2. find_hyperlinks(text):')
         # matches [link_path link_name]
         hyperlist = hypermatches
         regex = r'^(.*)\[(http\:|https\:|file\:|e\:\/wiki\/|e\:wiki\/|' +\
             r'\/wiki\/|wiki\:|attachment\:)(.*?)\](.*?)$'
 
     elif regex_id == 2 and len(hypermatches) > 0:
-        print('3. find_hyperlinks(text):')
+        #print('3. find_hyperlinks(text):')
         hyperlist = hypermatches
         regex = r"^(.*)(http\:|https\:|file\:|e\:\/wiki\/|e\:wiki\/|" +\
             r"\/wiki\/|wiki\:|attachment\:)(.*?)(?:\s*$|\s+)(.*?)$"
 
     elif regex_id == 3 and len(hypermatches) > 0:
-        print('4. find_hyperlinks(text):')
+        #print('4. find_hyperlinks(text):')
         hyperlist = get_hyperlist_ticket(hypermatches)
         regex = r"^(.*)(r\:\#)(.*?)(?:\s*$|\s+)(.*?)$"
 
     elif regex_id == 4 and len(hypermatches) > 0:
-        print('5. find_hyperlinks(text):')
+        #print('5. find_hyperlinks(text):')
         hypermatches = check_for_relative_link(hypermatches)
         hyperlist = get_hyperlist_dbrk(hypermatches)
         regex = r'^(.*)\[\[(.*?\/.*?)(.*?)\]\](.*?)$'
 
     if regex_id >= 0 and len(hypermatches) > 0:
-        print('6. find_hyperlinks(text):')
+        #print('6. find_hyperlinks(text):')
         match_pattern = re.compile(regex)
         match = match_pattern.match(text)
         if match:
@@ -416,11 +420,17 @@ def tables_in_spec_text(i_text):
     found = False
     key = 0
     text_without_tables = []
-    for line in i_text[1].splitlines():
+    
+    lines = i_text[1].splitlines()
+    print('lines', lines[-1])
+    for line in lines:
         match = regex.match(line)
         text_without_tables.append(line + '\n')
+        print('line, match, found:', line, match, found)
         if match:
             found = True
+            print('match line:', line)
+            print('1.found', found)
             columns = line.split("||")
             columns = columns[1:-1] #Removing first and last ||
             # columns = [list(j) for i, j in groupby(columns)]
@@ -434,6 +444,8 @@ def tables_in_spec_text(i_text):
             table.append(columnlist)
             text_without_tables.pop()
         elif found:
+            print('found line:', line)
+            print('2.found', found)
             # Inserting [[Table(Table_ID.tbl)]] anchor
             # and removing the table from the text
             line_after = text_without_tables[-1]
@@ -448,9 +460,28 @@ def tables_in_spec_text(i_text):
             table = []
             key += 1
             text_without_tables = []
+        else:
+            found = False
+        
     yield (table, text_without_tables)
 
-def get_sections_with_tables(sections):
+def get_header_in_text_line(line):
+    """ Find a header in a text line ....  """
+
+    #header = re.compile(r'\s*(=+)\s*(\d*)')
+    header = re.compile(r'\s*(=+)(\s*)(\.*)')
+
+    match = header.match(line)
+    
+    print('get_header_in_text_line:')
+    print('match', match)
+
+    if match:
+        print('match.group(1)', match.group(1))
+
+    return line
+
+def get_tables_in_text(sections):
     """ given a list of sections, returns a list of sections
         with attached tables stored in a dictionary where key
         is the table name in the spec and value is the table data. """

@@ -4,13 +4,10 @@ it reads a wiki page and prints this information into a word
 document (docx/docm).
 """
 
-import docx
 import os
 import sys
 import re
 import urllib
-from docx.shared import Inches
-from docx.shared import Pt
 from enum import IntEnum
 from genshi.builder import tag
 from trac.core import Component, implements
@@ -23,7 +20,7 @@ from trac.attachment import Attachment
 from trac.web.api import RequestDone
 from trac.util.text import to_unicode
 from trac.util import content_disposition
-from .helpers import set_req_keys, get_base_url, get_sections_with_tables
+from .helpers import set_req_keys, get_base_url, get_tables_in_text
 from .doc import Doc
 import numpy as np
 
@@ -106,7 +103,7 @@ class WikiToDoc(Component):
         print('self.env', self.env)
 
         if req.method == 'POST':
-
+            errorlog = []
             print('request is not:', req)
             print('request args:', req.args)
 
@@ -129,9 +126,15 @@ class WikiToDoc(Component):
                 page = WikiPage(self.env, spec_name)
 
                 print(page.name)
-
-                errorlog, content = self.process_report_task(page, req)
-                print('errorlog', errorlog)
+                print('dir(print(page))', dir(page))
+                print('page.exists', page.exists)
+                
+                if page.exists == True:
+                    errorlog, content = self.process_document(page, req)
+                    print('True errorlog', errorlog)
+                else:
+                    errorlog.append(("Page {} does not exist.".format(page.name), page.name))
+                    print('False errorlog', errorlog)
                 # select dropdowns in form
 #                 keys = [project, igrmilestone,
 #                         milestone, igrtask,
@@ -166,13 +169,12 @@ class WikiToDoc(Component):
         else:
             pass
 
-        data = {}
         add_stylesheet(req, 'hw/css/wiki2doc.css')
         # This tuple is for Genshi (template_name, data, content_type)
         # Without data the trac layout will not appear.
         if hasattr(Chrome, 'add_jquery_ui'):
             Chrome(self.env).add_jquery_ui(req) # pylint: disable=no-member        
-        return 'wiki2doc.html', data, None
+        return 'wiki2doc.html', self.data, None
 
     # ITemplateProvider methods
     # Used to add the plugin's templates and htdocs
@@ -200,7 +202,6 @@ class WikiToDoc(Component):
         self.errorlog.append(
             ("Attachment {} could not be found at {}.".\
              format(TEMPLATE_NAME, TEMPLATE_PAGE),
-             0,
              page_path))
 
     def get_htdocs_dirs(self):
@@ -217,26 +218,27 @@ class WikiToDoc(Component):
         from pkg_resources import resource_filename
         return [('hw', resource_filename(__name__, 'htdocs'))]
     
-    def process_report_task(self, page, req):
+    def process_document(self, page, req):
         """ process selected create apo and
             create report tasks."""
 
         document = self.create_document(req)
 
-        sections = self.get_sections_with_images(page, req)
+        
+        
+        sections = self.get_images_in_text(page, req)
         print('1.sections', sections)
         
         #sections = np.array(sections)
         
         #print('shape', sections.shape)
         
-        sections = get_sections_with_tables(sections)
+        sections = get_tables_in_text(sections)
         print('2.sections', sections)
         
         document.add_document(sections)
         print('OK So far after document.add_document(sections)')
         return self.errorlog, document.get_content()
-        #return None, None
     
     def create_document(self, req):
         """ Creates document class """
@@ -254,7 +256,7 @@ class WikiToDoc(Component):
 
         return document
 
-    def get_sections_with_images(self, page, req):
+    def get_images_in_text(self, page, req):
         """ given a list of sections, returns a list of sections
             with attached images stored in a dictionary where key
             is the image file name in the spec and value is the
@@ -269,6 +271,10 @@ class WikiToDoc(Component):
         image = re.compile(r'\s*\[\[Image\((.*(\.jpg|\.png|\.gif))\)\]\]\s*')
 
         text = page.text
+        # Adding a new line to the last line to ensure that
+        # all lines are processes (especially if there are
+        # tables  later in get_tables_in_text function
+        text = text + '\n\n'
         if text is not None:
             for line in text.splitlines():
                 match = image.match(line)
@@ -287,6 +293,13 @@ class WikiToDoc(Component):
 
         return sections_with_imgs
 
+    def get_wikipage(self, spec_name):
+        """ return a wiki page """
+
+        page = WikiPage(self.env, spec_name)
+        if page.exists:
+            return page
+
     def get_image_file(self, filename, page, req):
         """ return path of image attachment """
 
@@ -302,13 +315,11 @@ class WikiToDoc(Component):
             self.errorlog.append(
                 ("Attachment {} could not be found at {}".\
                  format(filename, page.resource.id),
-                 0,
                  page_path))
         else:
             self.errorlog.append(
                 ("Page for the spec " +\
                  "{} could not be found!".format(page.name),
-                 0,
                  page_path))
 
     

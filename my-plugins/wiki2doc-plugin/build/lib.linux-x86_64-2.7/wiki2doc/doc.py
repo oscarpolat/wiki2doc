@@ -5,6 +5,9 @@ import os
 import tempfile
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
+
+from docx.text.paragraph import Paragraph
+from docx.oxml.xmlchemy import OxmlElement
 #from trac.mimeview import Context
 from trac.web.chrome import web_context
 from trac.util.text import to_unicode
@@ -24,7 +27,8 @@ insert_image,\
 merge_table,\
 process_blockquote,\
 remove_forward_slash,\
-table_font_size
+table_font_size,\
+get_header_in_text_line
 
 from .parser import DocumentHTMLParser
 
@@ -38,6 +42,17 @@ class Doc(object): # pylint: disable=too-many-public-methods
         self.req = args[3]
         
         self.add_hyper_link = True
+
+    def insert_paragraph_after(self, paragraph, text=None, style=None):
+        """Insert a new paragraph after the given paragraph."""
+        new_p = OxmlElement("w:p")
+        paragraph._p.addnext(new_p)
+        new_para = Paragraph(new_p, paragraph._parent)
+        if text:
+            new_para.add_run(text)
+        if style is not None:
+            new_para.style = style
+        return new_para
 
     def save(self, path):
         """ save docx to path """
@@ -154,7 +169,6 @@ class Doc(object): # pylint: disable=too-many-public-methods
                 " columns in each row must match including merged" +\
                 " cells! Check the following table with a:" +\
                 " header: {}".format(args[0][0]),
-                get_base_url(self.req),
                 page_path))
         return (args[1], merge_list)
   
@@ -204,7 +218,6 @@ class Doc(object): # pylint: disable=too-many-public-methods
             self.wiki2doc.errorlog.append(
                 "Merge cell list length and table length does not match." +\
                 "Please check the merged cells in: {} \n".format(data[0]),
-                0,
                 'None')
   
     def insert_table(self, paragraph, data, task_id, spec_name):
@@ -245,8 +258,7 @@ class Doc(object): # pylint: disable=too-many-public-methods
             ("Specified link does not exist. Please check the " +\
              "full path and the name of the following link:'{}']".format(\
                                                            missing_spec),
-             get_base_url(self.req) + \
-             'Coconut/event/wiki/' + in_spec))
+             get_base_url(self.req) + 'wiki/' + in_spec))
   
     def get_wiki_hyperlink(self, spec_name, hyper):
         """ returns the wiki page hyperlink path for
@@ -360,9 +372,9 @@ class Doc(object): # pylint: disable=too-many-public-methods
   
         #context = Context.from_request(self.req, 'wiki')
         context = web_context(self.req, 'wiki')
-        print('inside filter_hyperlinks -> everthing is ok so far before -> regex_id, hypermatches = find_hyperlinks(args[2])')
+        #print('inside filter_hyperlinks -> everthing is ok so far before -> regex_id, hypermatches = find_hyperlinks(args[2])')
         regex_id, hypermatches = find_hyperlinks(args[2])
-        print('regex_id, hypermatches = find_hyperlinks(args[2])', regex_id, hypermatches)
+        #print('regex_id, hypermatches = find_hyperlinks(args[2])', regex_id, hypermatches)
         hyperlink = ''
         if len(hypermatches) > 0:
                 link_name = ''
@@ -394,13 +406,13 @@ class Doc(object): # pylint: disable=too-many-public-methods
                 wiki = process_blockquote(check_string(rest))
                 self.parse_html(args, context, wiki)
         else:
-            print('inside filter_hyperlinks(self, args): after else:')
-            print('args[2]', args[2])
+            #print('inside filter_hyperlinks(self, args): after else:')
+            #print('args[2]', args[2])
             wiki = process_blockquote(check_string(args[2]))
-            print('wiki', wiki)
-            print('args', args)
+            #print('wiki', wiki)
+            #print('args', args)
             self.parse_html(args, context, wiki)
-            print('fine so far after self.parse_html(args, context, wiki) in inside filter_hyperlinks(self, args): after else:')
+            #print('fine so far after self.parse_html(args, context, wiki) in inside filter_hyperlinks(self, args): after else:')
             #args[2].rows[args[0]].cells[args[1]].text = \
             #        unicode(args[3], "utf-8")
         return (args[0], hypermatches)
@@ -416,16 +428,15 @@ class Doc(object): # pylint: disable=too-many-public-methods
             html_code = HtmlFormatter(self.env,
                                       context,
                                       wiki).generate()
-            print('inside parse_html before DocumentHTMLParser')
+            #print('inside parse_html before DocumentHTMLParser')
             DocumentHTMLParser(self.document, args[1], html_code)
-            print('inside parse_html after DocumentHTMLParser')
+            #print('inside parse_html after DocumentHTMLParser')
             return html_code
         except AttributeError:
             self.wiki2doc.errorlog.append(
                 ("HtmlFormatter could not parse" +\
                  " the following wikitext: {}".format(wiki),
-                 get_base_url(self.req) + \
-                 'wiki/' + args[3]))
+                 get_base_url(self.req) + 'wiki/' + args[3]))
   
     def find_sections(self, params):
         """ Given paragraph location and sections data,
@@ -441,7 +452,7 @@ class Doc(object): # pylint: disable=too-many-public-methods
         wiki_filter = \
             [re.compile(r'\s*\[\[Image\((.*(\.jpg|\.png|\.gif))\)\]\]\s*'),
              re.compile(r'\s*\[\[Table\((.*)\.tbl\)\]\]\s*'),
-             re.compile(r'\s*(=+)\s*(\d+\.){1,}\d*(.*)'),
+             re.compile(r'\s*(=+)(.*)'),
              re.compile(r'\s*\[\s*=\#Table(\d+)\s*\]\s*'),
              re.compile(r'\s*\[\s*=\#Fig(\d+)\s*\]\s*'),
              re.compile(r'\s*\*\s*(.*)')]
@@ -450,7 +461,8 @@ class Doc(object): # pylint: disable=too-many-public-methods
 #         section = re.compile(r'\s*(=+)\s*(\d+\.){1,}\d*(.*)')
 #         tbl = re.compile(r'\s*\[\s*=\#Table(\d+)\s*\]\s*')
 #         fig = re.compile(r'\s*\[\s*=\#Fig(\d+)\s*\]\s*')
-        print('inside find_sections every. ok so far')
+        print('find_sections:')
+        print('find_sections -> TEXT:', params[3])
         for line in params[3].splitlines():
             line = to_unicode(line)
 #             img_match = wiki_filter[0].match(line)
@@ -458,8 +470,11 @@ class Doc(object): # pylint: disable=too-many-public-methods
 #             sec_match = wiki_filter[2].match(line)
 #             tbl_match = wiki_filter[3].match(line)
 #             fig_match = wiki_filter[4].match(line)
+
+            get_header_in_text_line(line)
+            
             if wiki_filter[0].match(line):
-                print('1')
+                #print('1')
                 img_filename = to_unicode(wiki_filter[0].match(line).group(1))
                 for key, value in params[4].iteritems():
                     if key == img_filename:
@@ -469,29 +484,54 @@ class Doc(object): # pylint: disable=too-many-public-methods
                         # params[1].insert_paragraph_before(line)
                         insert_image(params[1], img_path)
             elif wiki_filter[1].match(line):
-                print('2')
+                #print('2')
                 self.get_table(params,
                                to_unicode(wiki_filter[1].match(line).group(1)))
             elif wiki_filter[2].match(line):
                 print('3')
+                
+                #line = get_header_in_text_line(line)
+                print('wiki_filter[2].match(line).group(1)', wiki_filter[2].match(line).group(1))
+                print('wiki_filter[2].match(line).group(2)', wiki_filter[2].match(line).group(2))
                 style_key = 'Heading' +\
                             ' ' + \
-                            str(len(wiki_filter[2].match(line).group(1))+1)
+                            str(len(wiki_filter[2].match(line).group(1)))
+
+                print('WHY!')
+                print(dir(params[1]),'\n')
+                print('\n')
+                print(dir(params[1]._p), '\n')
+                print('\n')
+                print(dir(params[1]._p.add_p_before), '\n')
+                print('\n')
+                print(dir(params[1]._insert_paragraph_before), '\n')
+                print('\n')
+                print(dir(params[1]._p.add_p_before()))
+                print('\n')
+                
                 params[1].insert_paragraph_before(\
-                    to_unicode(wiki_filter[2].match(line).group(3).strip()),
+                    to_unicode(wiki_filter[2].match(line).group(2).strip()),
                     style=style_key)
+                
+                #params[1] = self.insert_paragraph_after(params[1], "Paragraph One And A Half.")
+                if params[1] is not None:
+                    new = params[1].insert_paragraph_before()
+                    new.text = 'test'
+                    p = new._p
+                    p.addnext(new._p)
+                
             elif wiki_filter[3].match(line):
-                print('4')
+                #print('4')
                 line = 'Table' + ' ' + str(wiki_filter[3].match(line).group(1))
                 line = to_unicode(line)
                 params[1].insert_paragraph_before(line, style='Caption')
             elif wiki_filter[4].match(line):
-                print('5')
+                #print('5')
                 line = 'Figure' + ' ' + str(wiki_filter[4].match(line).group(1))
                 line = to_unicode(line)
                 params[1].insert_paragraph_before(line, style='Caption')
             elif wiki_filter[5].match(line):
-                print('6')
+                #print('6')
                 line = str(wiki_filter[5].match(line).group(1))
                 line = to_unicode(line)
                 paragraph = create_list(\
@@ -505,10 +545,10 @@ class Doc(object): # pylint: disable=too-many-public-methods
                 # spec_name -> params[2][params[0]][0] = sections[0]
                 self.filter_hyperlinks(args)
             else:
-                print('7')
-                print('line:', line)
-                print('params[2][params[0]][0]:', params[2][params[0]][0])
-                print('params[2][params[0]][1]:', params[2][params[0]][1])
+                #print('7')
+                #print('line:', line)
+                #print('params[2][params[0]][0]:', params[2][params[0]][0])
+                #print('params[2][params[0]][1]:', params[2][params[0]][1])
                 
                 line = filter_wiki_text(line)
                 args = [None,
@@ -599,10 +639,11 @@ class Doc(object): # pylint: disable=too-many-public-methods
         """ Given paragraph location and sections data,
             inserts section text, if found images and
             if found tables."""
-  
+
         spec_images = {}
         print('inside_section -> sections', sections)
         for i in range(len(sections)):
+            print('inser_section -> TEXT:', i, sections[i][1])
             text = sections[i][1]
             print(text)
             spec_images.update(sections[i][2])
