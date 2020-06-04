@@ -514,11 +514,20 @@ class Doc(object): # pylint: disable=too-many-public-methods
                     style=style_key)
                 
                 #params[1] = self.insert_paragraph_after(params[1], "Paragraph One And A Half.")
+#                 if params[1] is not None:
+#                     new = params[1].insert_paragraph_before()
+#                     new.text = 'test'
+#                     p = new._p
+#                     p.addnext(new._p)
+                    
+
                 if params[1] is not None:
-                    new = params[1].insert_paragraph_before()
-                    new.text = 'test'
+                    new = params[1].insert_paragraph_before(to_unicode(wiki_filter[2].match(line).group(2).strip()), style=style_key)
+                    #new.text = 'test'
+                    run = new.add_run('test')
+                    run.font.subscript = True
                     p = new._p
-                    p.addnext(new._p)
+                    p.addnext(new._p)                    
                 
             elif wiki_filter[3].match(line):
                 #print('4')
