@@ -422,7 +422,7 @@ def tables_in_spec_text(i_text):
     text_without_tables = []
     
     lines = i_text[1].splitlines()
-    print('lines', lines[-1])
+    print('lines', lines)
     for line in lines:
         match = regex.match(line)
         text_without_tables.append(line + '\n')
@@ -432,6 +432,11 @@ def tables_in_spec_text(i_text):
             print('match line:', line)
             print('1.found', found)
             columns = line.split("||")
+            
+            for i in range(len(columns)):
+                columns[i] = columns[i].strip()
+            print('columns', columns)
+            
             columns = columns[1:-1] #Removing first and last ||
             # columns = [list(j) for i, j in groupby(columns)]
             # The groupby(columns) statement is the short form
@@ -441,6 +446,7 @@ def tables_in_spec_text(i_text):
             for i, j in groupby(columns):
                 columnlist.append(list(j))
                 columnkeys.append(i)
+            print('columnlist', columnlist)
             table.append(columnlist)
             text_without_tables.pop()
         elif found:
@@ -449,11 +455,16 @@ def tables_in_spec_text(i_text):
             # Inserting [[Table(Table_ID.tbl)]] anchor
             # and removing the table from the text
             line_after = text_without_tables[-1]
+            
+            print('line_after', line_after)
+            print('text_without_tables', text_without_tables)
+            
             text_without_tables.pop()
             key_string = 'Table_' + str(i_text[0]+1) + str(key+1)
             line = '[[Table(' + key_string + '.tbl)]]\n'
             text_without_tables.append(line)
             #text_without_tables.append(line_after + '\n')
+            print('line_after', line_after)
             text_without_tables.append(line_after)
             yield (table, text_without_tables)
             found = False

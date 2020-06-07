@@ -99,6 +99,8 @@ class Doc(object): # pylint: disable=too-many-public-methods
          start = 0
          end = 0
   
+         print('inside get_merge_row params:', params)  
+  
          for idx, item in enumerate(params[1]):
              for idy, value in enumerate(item):
                  if check_table_row_length(params[3],
@@ -137,6 +139,9 @@ class Doc(object): # pylint: disable=too-many-public-methods
                     table,
                     col_size,
                     spec_name]"""
+        
+        print('inside find_merged_cells args:', args)            
+        
         merge_list = []
         table_row_length = set()
         for idr, row in enumerate(args[0]):
@@ -151,6 +156,9 @@ class Doc(object): # pylint: disable=too-many-public-methods
                       row_length,
                       args[1],
                       args[3]]
+            
+            print('inside find_merged_cells params:', params)     
+            
             args[1], table_row_length, merge_row = self.get_merge_row(params)
   
             merge_list.append(merge_row)
@@ -172,7 +180,7 @@ class Doc(object): # pylint: disable=too-many-public-methods
                 page_path))
         return (args[1], merge_list)
   
-    def append_table(self, data, task_id, spec_name):
+    def append_table(self, data, spec_name):
         """ for a given table data, this function analyzes the table,
             looks for cells to be merged inside the text as described
             below. Creates the table with the values first, then calls
@@ -206,7 +214,6 @@ class Doc(object): # pylint: disable=too-many-public-methods
         args = [data,
                 table,
                 col_size,
-                task_id,
                 spec_name]
         table, merge_list = self.find_merged_cells(args)
   
@@ -220,7 +227,7 @@ class Doc(object): # pylint: disable=too-many-public-methods
                 "Please check the merged cells in: {} \n".format(data[0]),
                 'None')
   
-    def insert_table(self, paragraph, data, task_id, spec_name):
+    def insert_table(self, paragraph, table_data, spec_name):
         """ insert table """
   
         # ************************************* IMPORTANT *******
@@ -239,7 +246,7 @@ class Doc(object): # pylint: disable=too-many-public-methods
         TracGuide — The Trac User and Administration Guide        
         '''
   
-        table = self.append_table(data, task_id, spec_name)
+        table = self.append_table(table_data, spec_name)
         table.style = 'Table Grid'
   
         if paragraph is not None:
@@ -599,11 +606,16 @@ class Doc(object): # pylint: disable=too-many-public-methods
         if params[2][params[0]][3]:
             for value in params[2][params[0]][3]:
                 if value == match_group:
-                    table = params[2][params[0]][3][value]
+                    table_data = params[2][params[0]][3][value]
+                    
+                    print('params[1]:', params[1])
+                    print('table_data:', table_data)
+                    print('params[2][params[0]][0]:', params[2][params[0]][0])
+                    print('params[2][params[0]][1]:', params[2][params[0]][1])
+                       
                     self.insert_table(params[1],
-                                      table,
-                                      params[2][params[0]][0],
-                                      params[2][params[0]][1])
+                                      table_data,
+                                      params[2][params[0]][0])
   
     def insert_analysed_apos_table(self, paragraph, sections):
         """ Given paragraph location and sections data,
