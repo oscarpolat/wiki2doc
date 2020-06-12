@@ -20,8 +20,8 @@ from trac.attachment import Attachment
 from trac.web.api import RequestDone
 from trac.util.text import to_unicode
 from trac.util import content_disposition
-from .helpers import set_req_keys, get_base_url, get_tables_in_text
-from .doc import Doc
+from helpers import set_req_keys, get_base_url, get_tables_in_text
+from doc import Doc
 import numpy as np
 
 from trac.util.html import html

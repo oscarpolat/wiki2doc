@@ -13,7 +13,7 @@ from trac.web.chrome import web_context
 from trac.util.text import to_unicode
 from trac.wiki.formatter import HtmlFormatter
 from HTMLParser import HTMLParser
-from .helpers import\
+from helpers import\
 add_hyperlink,\
 check_table_row_length,\
 check_string,\
@@ -233,9 +233,8 @@ class Doc(object): # pylint: disable=too-many-public-methods
         # ************************************* IMPORTANT *******
         # ADD THIS! KeyError: u"no style with name 'TableGrid'"
         '''
-        Oops…
         Trac detected an internal error:
-        KeyError: u"no style with name 'TableGrid'"
+        KeyError: u"no style with name TableGrid
         There was an internal error in Trac. It is recommended that you notify your local Trac administrator with the information needed to reproduce the issue.
         
         To that end, you could  a ticket.
@@ -243,7 +242,7 @@ class Doc(object): # pylint: disable=too-many-public-methods
         The action that triggered the error was:
         
         POST: /wiki2doc
-        TracGuide — The Trac User and Administration Guide        
+        TracGuide The Trac User and Administration Guide        
         '''
   
         table = self.append_table(table_data, spec_name)

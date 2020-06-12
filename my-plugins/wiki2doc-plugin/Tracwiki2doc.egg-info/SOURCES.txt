@@ -13,6 +13,3 @@ wiki2doc/htdocs/css/wiki2doc.css
 wiki2doc/htdocs/images/wiki2doc.jpg
 wiki2doc/htdocs/images/wiki2doc_large.jpg
 wiki2doc/templates/wiki2doc.html
-wiki2doc/unittests/__init__.py
-wiki2doc/unittests/api.py
-wiki2doc/unittests/wikitodoc.py
