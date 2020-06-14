@@ -27,3 +27,9 @@ WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:File your_project_logo.png
 WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:[127.0.0.1] HTTPNotFound: 404 Not Found (File your_project_logo.png not found), <RequestWithSession "GET '/chrome/site/your_project_logo.png'">, referrer 'http://127.0.0.1:8000/wiki'
 WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:File your_project_logo.png not found in any of ['/home/ozgur/my-trac/trac-wiki2doc/htdocs']
 WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:[127.0.0.1] HTTPNotFound: 404 Not Found (File your_project_logo.png not found), <RequestWithSession "GET '/chrome/site/your_project_logo.png'">, referrer 'http://127.0.0.1:8000/'
+WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:[trac] base_url option not set in configuration, generated links may be incorrect
+WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:File your_project_logo.png not found in any of ['/home/ozgur/my-trac/trac-wiki2doc/htdocs']
+WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:[127.0.0.1] HTTPNotFound: 404 Not Found (File your_project_logo.png not found), <RequestWithSession "GET '/chrome/site/your_project_logo.png'">, referrer 'http://127.0.0.1:8000/'
+WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:Rendering Genshi template 'wiki2doc.html' (convert to Jinja2 before Trac 1.5.1)
+WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:File your_project_logo.png not found in any of ['/home/ozgur/my-trac/trac-wiki2doc/htdocs']
+WARNING:Trac.39b23e0b66b3c780c187cb0cdd2d4a65f04e993d:[127.0.0.1] HTTPNotFound: 404 Not Found (File your_project_logo.png not found), <RequestWithSession "GET '/chrome/site/your_project_logo.png'">, referrer 'http://127.0.0.1:8000/wiki2doc'

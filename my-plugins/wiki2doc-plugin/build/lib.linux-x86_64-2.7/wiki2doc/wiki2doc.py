@@ -3,6 +3,8 @@ This module processes web requests from WIKI to DOC page,
 it reads a wiki page and prints this information into a word
 document (docx/docm).
 """
+import logging
+logging.basicConfig(filename='unittest.log', level=logging.DEBUG)
 
 import os
 import sys
@@ -50,7 +52,7 @@ TEMPLATE_PAGE = 'Attachments'
 TEMPLATE_NAME = 'template.docx'
 #TEMPLATE_NAME = 'template.docm'
 
-class WikiToDoc(Component):
+class Wiki2Doc(Component):
     implements(INavigationContributor, ITemplateProvider, IRequestHandler)
 
     errorlog = []

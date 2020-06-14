@@ -30,7 +30,7 @@ remove_forward_slash,\
 table_font_size,\
 get_header_in_text_line
 
-from .parser import DocumentHTMLParser
+from parser import DocumentHTMLParser
 
 class Doc(object): # pylint: disable=too-many-public-methods
     """ class to create a document in MS Word """

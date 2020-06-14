@@ -8,7 +8,8 @@ import unittest
 import sys
 import re
 from docx import Document
-from wiki2doc import WikiToDoc
+
+from wiki2doc.wiki2doc import Wiki2Doc
 from helpers import\
 check_table_row_length, merge_table,\
 table_font_size, add_hyperlink,\
@@ -68,7 +69,7 @@ def _insert_wiki_pages(env, pages):
         page.text = text
         page.save('author', 'comment', '::1', time)
 
-class Wiki2docTestCase(unittest.TestCase):# pylint: disable=too-many-instance-attributes, too-many-public-methods
+class Wiki2DocTestCase(unittest.TestCase):# pylint: disable=too-many-instance-attributes, too-many-public-methods
     """ Tests for the basic report api """
 
     def setUp(self):
@@ -3698,3 +3699,6 @@ sanctus est Lorem ipsum dolor sit amet."""}
                          self.tables,
                          "Tables do not match in " +\
                          "add_abbreviations of sar report!")
+        
+if __name__ == '__main__':
+    unittest.main()
